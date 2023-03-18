@@ -17,36 +17,32 @@ def get_page(page_number, posts):
 
 @cache_page(20, key_prefix="index_page")
 def index(request):
-    template = "posts/index.html"
-    posts = Post.objects.all()
-    page_obj = get_page(request.GET.get("page"), posts)
-    context = {
-        "page_obj": page_obj,
-    }
-    return render(request, template, context)
+    posts = Post.objects.select_related("group", "author")
+    return render(
+        request,
+        "posts/index.html",
+        {"page_obj": get_page(request.GET.get("page"), posts)},
+    )
 
 
 def group_posts(request, slug):
-    template = "posts/group_list.html"
     group = get_object_or_404(Group, slug=slug)
-    posts = group.posts.all()
-    page_obj = get_page(request.GET.get("page"), posts)
-    context = {
-        "group": group,
-        "posts": posts,
-        "page_obj": page_obj,
-    }
-    return render(request, template, context)
+    posts = group.posts.select_related("author")
+    return render(
+        request,
+        "posts/group_list.html",
+        {"group": group, "page_obj": get_page(request.GET.get("page"), posts)},
+    )
 
 
 def profile(request, username):
     author = get_object_or_404(User, username=username)
-    posts = author.posts.all()
-    following = False
-    if request.user.is_authenticated and author != request.user:
-        following = Follow.objects.filter(
-            user=request.user, author=author
-        ).exists()
+    posts = author.posts.select_related("group")
+    post_count = author.posts.count
+    following = (
+        request.user.is_authenticated
+        and Follow.objects.filter(user=request.user, author=author).exists()
+    )
     return render(
         request,
         "posts/profile.html",
@@ -54,6 +50,7 @@ def profile(request, username):
             "author": author,
             "page_obj": get_page(request.GET.get("page"), posts),
             "following": following,
+            "post_count": post_count
         },
     )
 
@@ -62,7 +59,7 @@ def post_detail(request, post_id):
     post = get_object_or_404(
         Post.objects.select_related("author", "group"), id=post_id
     )
-    comments = post.comments.all().select_related("author")
+    comments = post.comments.select_related("author")
     form = CommentForm()
     author = request.user.id
     return render(
@@ -119,7 +116,9 @@ def add_comment(request, post_id):
 
 @login_required
 def follow_index(request):
-    posts = Post.objects.filter(author__following__user=request.user)
+    posts = Post.objects.filter(
+        author__following__user=request.user
+    ).select_related("author", "group")
     return render(
         request,
         "posts/follow.html",

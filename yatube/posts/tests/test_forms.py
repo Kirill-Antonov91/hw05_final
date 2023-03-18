@@ -85,7 +85,7 @@ class PostCreateFormTests(TestCase):
 
     def test_add_comment_authorized_client(self):
         """После проверки формы комментарий
-        авторизованного пользователя добавляется в пост
+        авторизованного пользователя добавляется в пост.
         """
         form_data = {
             "text": "comment_from_user",
@@ -108,7 +108,7 @@ class PostCreateFormTests(TestCase):
 
     def test_add_comment_guest_client(self):
         """комментировать посты может только
-        авторизованный пользователь;
+        авторизованный пользователь.
         """
         form_data = {
             "text": "Комментарий гостя",
@@ -189,7 +189,7 @@ class PostEditFormTests(TestCase):
         shutil.rmtree(TEMP_MEDIA_ROOT, ignore_errors=True)
 
     def test_edit_post_authorized(self):
-        """Тестируем редактирования поста авторизованным пользователем"""
+        """Тестируем редактирования поста авторизованным пользователем."""
         posts_count = Post.objects.count()
         response = self.authorized_client.post(
             reverse(

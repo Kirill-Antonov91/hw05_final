@@ -126,11 +126,13 @@ class PostURLTests(TestCase):
             "FOLLOW_INDEX": cls.URLS_BEST_BEERS["FOLLOW_INDEX"],
         }
 
+    def setUp(self):
+        cache.clear()
+
     def test_available_urls_for_guest_client(self):
         """Проверяем доступные адреса для гостевого пользователя."""
         for url, template, status in self.URLS_GUEST_ALLOWED.values():
             with self.subTest(url=url, template=template, status=status):
-                cache.clear()
                 response = self.guest_client.get(url, follow=True)
                 self.assertTemplateUsed(response, template)
                 self.assertEqual(response.status_code, status)
@@ -139,7 +141,6 @@ class PostURLTests(TestCase):
         """Проверяем редиректы для гостевого пользователя на авторизацию."""
         for url, _, _ in self.URLS_GUEST_REDIRECT_LOGIN.values():
             with self.subTest(url=url):
-                cache.clear()
                 response = self.guest_client.get(url, follow=True)
                 self.assertRedirects(response, "/auth/login/?next=" + url)
 
@@ -147,7 +148,6 @@ class PostURLTests(TestCase):
         """Проверяем доступные адреса для авторизованного пользователя."""
         for url, template, status in self.URLS_AUTHORIZED_ALLOWED.values():
             with self.subTest(url=url, template=template, status=status):
-                cache.clear()
                 response = self.authorized_client.get(url, follow=True)
                 self.assertTemplateUsed(response, template)
                 self.assertEqual(response.status_code, status)
@@ -158,7 +158,6 @@ class PostURLTests(TestCase):
         """
         for url, _, _ in self.URLS_AUTHORIZED_REDIRECT_POST_DETAIL.values():
             with self.subTest(url=url):
-                cache.clear()
                 response = self.authorized_client.get(url, follow=True)
                 self.assertRedirects(
                     response,
@@ -171,7 +170,6 @@ class PostURLTests(TestCase):
         """
         for url, _, _ in self.URLS_AUTHORIZED_REDIRECT_PROFILE.values():
             with self.subTest(url=url):
-                cache.clear()
                 response = self.authorized_client.get(url, follow=True)
                 self.assertRedirects(
                     response,
@@ -182,7 +180,6 @@ class PostURLTests(TestCase):
         """Проверяем доступные адреса для автора."""
         for url, template, status in self.URLS_AUTHOR_ALLOWED.values():
             with self.subTest(url=url, template=template, status=status):
-                cache.clear()
                 response = self.author_client.get(url, follow=True)
                 self.assertTemplateUsed(response, template)
                 self.assertEqual(response.status_code, status)
@@ -191,7 +188,6 @@ class PostURLTests(TestCase):
         """Проверяем редиректы для автора на страницу поста."""
         for url, _, _ in self.URLS_AUTHOR_REDIRECT_POST_DETAIL.values():
             with self.subTest(url=url):
-                cache.clear()
                 response = self.author_client.get(url, follow=True)
                 self.assertRedirects(
                     response,
@@ -202,7 +198,6 @@ class PostURLTests(TestCase):
         """Проверяем редиректы для автора на страницу профиля."""
         for url, _, _ in self.URLS_AUTHORIZED_REDIRECT_PROFILE.values():
             with self.subTest(url=url):
-                cache.clear()
                 response = self.author_client.get(url, follow=True)
                 self.assertRedirects(
                     response,

@@ -79,7 +79,7 @@ class PostPagesTests(TestCase):
             (
                 reverse(
                     "posts:profile",
-                    kwargs={"username": PostPagesTests.author},
+                    args={PostPagesTests.author.username},
                 ),
                 "posts/profile.html",
                 Post.objects.filter(author=PostPagesTests.post.author),
@@ -106,14 +106,16 @@ class PostPagesTests(TestCase):
             "image": forms.fields.ImageField,
         }
 
+    def setUp(self):
+        cache.clear()
+
     @classmethod
     def tearDownClass(cls):
         super().tearDownClass()
         shutil.rmtree(TEMP_MEDIA_ROOT, ignore_errors=True)
 
     def test_views_guest_client(self):
-        """Тестируем адреса для гостя"""
-        cache.clear()
+        """Тестируем адреса для гостя."""
         for name, template, filt in self.templates_guest:
             with self.subTest(name=name, template=template, filt=filt):
                 response = self.guest_client.get(name)
@@ -126,8 +128,7 @@ class PostPagesTests(TestCase):
                 )
 
     def test_views_author_client(self):
-        """Тестируем адреса для автора"""
-        cache.clear()
+        """Тестируем адреса для автора."""
         for name, template in self.templates_author:
             for value, expected in self.form_fields.items():
                 with self.subTest(name=name, template=template):
@@ -151,20 +152,37 @@ class PostPagesTests(TestCase):
                     self.assertTrue(is_edit_context)
 
     def test_comments_in_post_detail(self):
-        """Проверка доступности комментария"""
+        """Проверка доступности комментария."""
         response = self.guest_client.get(self.post_detail)
         self.assertIn("comments", response.context)
 
-    def test_cache_index(self):
-        """Проверка кеша главной страницы"""
+    def test_index_cached(self):
+        """Проверка кеша главной страницы."""
+        user = User.objects.create(username='TestUser')
+        post = Post.objects.create(
+            text='Test text',
+            author=user,)
+
+        guest_client = Client()
+        response = guest_client.get(reverse('posts:index'))
+        cashed_response_start = response.content
+
+        count = Post.objects.count()
+        self.assertEqual(4, count)
+
+        post.delete()
+
+        response = guest_client.get(reverse('posts:index'))
+        self.assertEqual(cashed_response_start,
+                         response.content)
+
         cache.clear()
-        response_1 = self.guest_client.get(self.post_index)
-        Post.objects.all().delete()
-        response_2 = self.guest_client.get(self.post_index)
-        self.assertEqual(response_1.content, response_2.content)
-        cache.clear()
-        response_3 = self.guest_client.get(self.post_index)
-        self.assertNotEqual(response_1.content, response_3.content)
+        response = guest_client.get(reverse('posts:index'))
+        self.assertNotEqual(cashed_response_start,
+                            response.content)
+
+        posts = response.context['page_obj']
+        self.assertNotIn(post, posts)
 
 
 class PaginatorViewsTest(TestCase):
@@ -201,15 +219,14 @@ class PaginatorViewsTest(TestCase):
             (
                 reverse(
                     "posts:profile",
-                    kwargs={"username": PaginatorViewsTest.author},
+                    args={PaginatorViewsTest.author.username},
                 ),
                 (POSTS_PER_PAGE, 3),
             ),
         )
 
     def test_pagination(self):
-        """Тестируем паджинатор"""
-        cache.clear()
+        """Тестируем паджинатор."""
         for url, page_count in self.pages:
             with self.subTest(url=url):
                 response = self.client.get(url)
@@ -241,11 +258,11 @@ class FollowTests(TestCase):
             author=cls.author, text="Текст для проверки ленты"
         )
         cls.follow_url = reverse(
-            "posts:profile_follow", kwargs={"username": cls.author.username}
+            "posts:profile_follow", args={cls.author.username}
         )
 
     def test_can_following_and_unfollowing(self):
-        """Фолловер может подписаться или отписаться"""
+        """Фолловер может подписаться или отписаться."""
         follow_count = Follow.objects.count()
         self.follower_client.get(self.follow_url)
         self.assertEqual(Follow.objects.count(), follow_count + 1)
@@ -253,19 +270,19 @@ class FollowTests(TestCase):
         self.follower_client.get(
             reverse(
                 "posts:profile_unfollow",
-                kwargs={"username": self.author.username},
+                args={self.author.username},
             )
         )
         self.assertEqual(Follow.objects.count(), follow_count - 1)
 
     def test_follow_page_for_follower(self):
-        """Пост появляется на странице того, кто подписан"""
+        """Пост появляется на странице того, кто подписан."""
         self.follower_client.get(self.follow_url)
         response = self.follower_client.get(reverse("posts:follow_index"))
         self.assertEqual(response.context["page_obj"][0], self.post)
 
     def test_follow_page_for_user(self):
-        """Пост не появляется на странице того, кто не подписан"""
+        """Пост не появляется на странице того, кто не подписан."""
         self.follower_client.get(self.follow_url)
         response = self.user_client.get(reverse("posts:follow_index"))
         self.assertEqual(len(response.context["page_obj"]), 0)
