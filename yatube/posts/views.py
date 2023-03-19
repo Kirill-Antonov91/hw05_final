@@ -38,7 +38,7 @@ def group_posts(request, slug):
 def profile(request, username):
     author = get_object_or_404(User, username=username)
     posts = author.posts.select_related("group")
-    post_count = author.posts.count
+    post_numbers = author.posts.count
     following = (
         request.user.is_authenticated
         and Follow.objects.filter(user=request.user, author=author).exists()
@@ -50,7 +50,7 @@ def profile(request, username):
             "author": author,
             "page_obj": get_page(request.GET.get("page"), posts),
             "following": following,
-            "post_count": post_count
+            "post_numbers": post_numbers
         },
     )
 
