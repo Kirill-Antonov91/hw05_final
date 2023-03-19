@@ -219,7 +219,7 @@ class PaginatorViewsTest(TestCase):
             (
                 reverse(
                     "posts:profile",
-                    args={PaginatorViewsTest.author.username},
+                    kwargs={"username": PaginatorViewsTest.author.username},
                 ),
                 (POSTS_PER_PAGE, 3),
             ),
