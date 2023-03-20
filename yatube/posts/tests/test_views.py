@@ -158,13 +158,14 @@ class PostPagesTests(TestCase):
 
     def test_index_cached(self):
         """Проверка кеша главной страницы."""
-        user = User.objects.create(username='TestUser')
+        user = User.objects.create(username="TestUser")
         post = Post.objects.create(
-            text='Test text',
-            author=user,)
+            text="Test text",
+            author=user,
+        )
 
         guest_client = Client()
-        response = guest_client.get(reverse('posts:index'))
+        response = guest_client.get(reverse("posts:index"))
         cashed_response_start = response.content
 
         count = Post.objects.count()
@@ -172,16 +173,14 @@ class PostPagesTests(TestCase):
 
         post.delete()
 
-        response = guest_client.get(reverse('posts:index'))
-        self.assertEqual(cashed_response_start,
-                         response.content)
+        response = guest_client.get(reverse("posts:index"))
+        self.assertEqual(cashed_response_start, response.content)
 
         cache.clear()
-        response = guest_client.get(reverse('posts:index'))
-        self.assertNotEqual(cashed_response_start,
-                            response.content)
+        response = guest_client.get(reverse("posts:index"))
+        self.assertNotEqual(cashed_response_start, response.content)
 
-        posts = response.context['page_obj']
+        posts = response.context["page_obj"]
         self.assertNotIn(post, posts)
 
 

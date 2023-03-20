@@ -14,7 +14,10 @@ class Migration(migrations.Migration):
     operations = [
         migrations.AlterModelOptions(
             name="group",
-            options={"verbose_name": "Группа", "verbose_name_plural": "Группы"},
+            options={
+                "verbose_name": "Группа",
+                "verbose_name_plural": "Группы",
+            },
         ),
         migrations.AlterModelOptions(
             name="post",
@@ -66,7 +69,10 @@ class Migration(migrations.Migration):
             model_name="post",
             name="image",
             field=models.ImageField(
-                blank=True, null=True, upload_to="posts/", verbose_name="Картинка"
+                blank=True,
+                null=True,
+                upload_to="posts/",
+                verbose_name="Картинка",
             ),
         ),
         migrations.AlterField(
