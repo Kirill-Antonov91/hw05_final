@@ -225,6 +225,9 @@ class PaginatorViewsTest(TestCase):
             ),
         )
 
+    def setUp(self):
+        cache.clear()
+
     def test_pagination(self):
         """Тестируем паджинатор."""
         for url, page_count in self.pages:
